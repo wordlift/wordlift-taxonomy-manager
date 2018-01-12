@@ -76,7 +76,6 @@ class Wordlift_Taxonomy_Manager {
 
 		$this->load_dependencies();
 		$this->set_locale();
-		$this->define_admin_hooks();
 
 	}
 
@@ -117,6 +116,8 @@ class Wordlift_Taxonomy_Manager {
 
 		$this->loader = new Wordlift_Taxonomy_Manager_Loader();
 
+		$plugin_admin = new Wordlift_Taxonomy_Manager_Admin();
+
 	}
 
 	/**
@@ -133,22 +134,6 @@ class Wordlift_Taxonomy_Manager {
 		$plugin_i18n = new Wordlift_Taxonomy_Manager_i18n();
 
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
-
-	}
-
-	/**
-	 * Register all of the hooks related to the admin area functionality
-	 * of the plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 */
-	private function define_admin_hooks() {
-
-		$plugin_admin = new Wordlift_Taxonomy_Manager_Admin( $this->get_plugin_name(), $this->get_version() );
-
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
 	}
 

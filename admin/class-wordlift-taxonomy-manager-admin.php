@@ -21,83 +21,96 @@
  * @author     WordLift <contact@wordlift.io>
  */
 class Wordlift_Taxonomy_Manager_Admin {
-
 	/**
-	 * The ID of this plugin.
+	 * The post types that will be processed
 	 *
 	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $plugin_name    The ID of this plugin.
+	 * @access   protected
+	 * @var      array    $post_types Post types that will be processed.
 	 */
-	private $plugin_name;
-
-	/**
-	 * The version of this plugin.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $version    The current version of this plugin.
-	 */
-	private $version;
+	protected $post_types = array(
+		'post',
+		'page'
+	);
 
 	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
-	 * @param      string    $plugin_name       The name of this plugin.
-	 * @param      string    $version    The version of this plugin.
 	 */
-	public function __construct( $plugin_name, $version ) {
-
-		$this->plugin_name = $plugin_name;
-		$this->version = $version;
-
+	public function __construct() {
+		// TO DO : Find a way to async process all posts.
 	}
 
 	/**
-	 * Register the stylesheets for the admin area.
+	 * Check whether the post has entity type associated and set default term if it hasn't.
 	 *
-	 * @since    1.0.0
+	 * @since 1.0.0
+	 *
+	 * @param int $id The {@link WP_Post}'s id.
 	 */
-	public function enqueue_styles() {
+	protected function maybe_set_default_term( $id ) {
+		// Check whether the post has any of the WordLift entity types.
+		$has_term = has_term( '', Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME, $id );
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Wordlift_Taxonomy_Manager_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Wordlift_Taxonomy_Manager_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
+		// Bail if the term is associated with entity types already.
+		if ( ! empty( $has_term ) ) {
+			return;
+		}
 
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/wordlift-taxonomy-manager-admin.css', array(), $this->version, 'all' );
+		// Set the default `article` term.
+		wp_set_object_terms( $id, 'article', Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME );
 
 	}
 
+	// TO DO : Find a way to async process all posts.
 	/**
-	 * Register the JavaScript for the admin area.
+	 * Get all posts that didn't have `wl_entity_type` taxonomy term assigned.
 	 *
-	 * @since    1.0.0
+	 * @since 1.0.0
+	 *
+	 * @return type 
 	 */
-	public function enqueue_scripts() {
+	public function get_posts() {
+		// Will retrieve all posts that didn't have any `wl_entity_type` taxonomy term.
+		$args = array(
+			'post_type' => $this->get_post_types(),
+			'tax_query' => array(
+				array(
+					'taxonomy' => Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME,
+					'operator' => 'NOT EXISTS',
+				),
+			),
+		);
+
+		// Get the posts.
+		$posts = get_posts( $args );
+
+		foreach ( $posts as $p ) {
+			$this->maybe_set_default_term( $p->ID );
+		}
+	}
+
+	/**
+	 * Returns the post types that will be processed.
+	 *
+	 * @since 1.0.0
+	 * 
+	 * @return array Post types that will be processed.
+	 */
+	protected function get_post_types() {
+		// Get the existing types.
+		$types = $this->post_types;
 
 		/**
-		 * This function is provided for demonstration purposes only.
+		 * Filter: 'wl_taxonomy_manager_post_types' - Allow third parties to
+		 * hook and extend the manager post types.
 		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Wordlift_Taxonomy_Manager_Loader as all of the hooks are defined
-		 * in that particular class.
+		 * @since  1.0.0
 		 *
-		 * The Wordlift_Taxonomy_Manager_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
+		 * @param  array $types The post types that will be used by manager.
 		 */
-
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/wordlift-taxonomy-manager-admin.js', array( 'jquery' ), $this->version, false );
-
+		return apply_filters( 'wl_taxonomy_manager_post_types', $types );
 	}
 
 }
