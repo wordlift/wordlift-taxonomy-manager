@@ -34,9 +34,9 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		add_action( 'wp_ajax_set_article_term', array(
+		add_action( 'wp_ajax_wl_set_article_term_bulk', array(
 			$this,
-			'set_article_term',
+			'set_article_term_bulk',
 		) );
 	}
 
@@ -74,6 +74,14 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 		return get_posts( $args );
 	}
 
+	public function set_article_term_bulk() {
+
+		$this->do_set_article_term_bulk();
+
+		wp_send_json_success();
+
+	}
+
 	/**
 	 * Set posts/pages default `article` entity term.
 	 *
@@ -81,7 +89,7 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 	 *
 	 * @return void
 	 */
-	public function set_article_term() {
+	private function do_set_article_term_bulk() {
 		// Get posts.
 		$posts = $this->get_posts_without_entity_term();
 
@@ -108,5 +116,7 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 
 		// Trigger the action for the next batch of posts.
 		do_action( 'wp_ajax_set_article_term' );
+
 	}
+
 }

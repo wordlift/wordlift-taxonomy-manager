@@ -51,7 +51,7 @@ class Wordlift_Taxonomy_Manager_Term_Service_Test extends WP_UnitTestCase {
 		$test = wp_set_object_terms( $post_id_2, 'event', Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME );
 
 		// Trigger the term service.
-		do_action( 'set_article_term' );
+		do_action( 'wl_set_article_term_bulk' );
 
 		// Get terms
 		$post_1_terms = wp_get_post_terms(
