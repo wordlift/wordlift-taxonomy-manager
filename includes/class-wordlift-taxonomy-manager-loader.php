@@ -19,7 +19,6 @@
  *
  * @package    Wordlift_Taxonomy_Manager
  * @subpackage Wordlift_Taxonomy_Manager/includes
- * @author     WordLift <contact@wordlift.io>
  */
 class Wordlift_Taxonomy_Manager_Loader {
 

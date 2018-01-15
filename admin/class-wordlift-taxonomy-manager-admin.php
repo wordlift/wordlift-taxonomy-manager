@@ -18,7 +18,6 @@
  *
  * @package    Wordlift_Taxonomy_Manager
  * @subpackage Wordlift_Taxonomy_Manager/admin
- * @author     WordLift <contact@wordlift.io>
  */
 class Wordlift_Taxonomy_Manager_Admin {
 	/**
@@ -39,66 +38,17 @@ class Wordlift_Taxonomy_Manager_Admin {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		// TO DO : Find a way to async process all posts.
+		add_action( 'wp_ajax_set_article_term', array( $this, 'set_article_term' ) );
 	}
 
 	/**
-	 * Check whether the post has entity type associated and set default term if it hasn't.
+	 * Get all posts/pages that didn't have `wl_entity_type` taxonomy term assigned.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param int $id The {@link WP_Post}'s id.
-	 */
-	protected function maybe_set_default_term( $id ) {
-		// Check whether the post has any of the WordLift entity types.
-		$has_term = has_term( '', Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME, $id );
-
-		// Bail if the term is associated with entity types already.
-		if ( ! empty( $has_term ) ) {
-			return;
-		}
-
-		// Set the default `article` term.
-		wp_set_object_terms( $id, 'article', Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME );
-
-	}
-
-	// TO DO : Find a way to async process all posts.
-	/**
-	 * Get all posts that didn't have `wl_entity_type` taxonomy term assigned.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return type 
+	 * @return type
 	 */
 	public function get_posts() {
-		// Will retrieve all posts that didn't have any `wl_entity_type` taxonomy term.
-		$args = array(
-			'post_type' => $this->get_post_types(),
-			'tax_query' => array(
-				array(
-					'taxonomy' => Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME,
-					'operator' => 'NOT EXISTS',
-				),
-			),
-		);
-
-		// Get the posts.
-		$posts = get_posts( $args );
-
-		foreach ( $posts as $p ) {
-			$this->maybe_set_default_term( $p->ID );
-		}
-	}
-
-	/**
-	 * Returns the post types that will be processed.
-	 *
-	 * @since 1.0.0
-	 * 
-	 * @return array Post types that will be processed.
-	 */
-	protected function get_post_types() {
 		// Get the existing types.
 		$types = $this->post_types;
 
@@ -110,7 +60,51 @@ class Wordlift_Taxonomy_Manager_Admin {
 		 *
 		 * @param  array $types The post types that will be used by manager.
 		 */
-		return apply_filters( 'wl_taxonomy_manager_post_types', $types );
+		$types = apply_filters( 'wl_taxonomy_manager_post_types', $types );
+
+		// Will retrieve all posts that didn't have any `wl_entity_type` taxonomy term.
+		$args = array(
+			'post_type' => $types,
+			'tax_query' => array(
+				array(
+					'taxonomy' => Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME,
+					'operator' => 'NOT EXISTS',
+				),
+			),
+		);
+
+		// Return the result.
+		return get_posts( $args );
 	}
 
+	/**
+	 * Set posts/pages default `article` entity term.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function set_article_term() {
+		// Get posts.
+		$posts = $this->get_posts();
+
+		// Bail if there are no posts.
+		// It will end the async loop.
+		if ( empty( $posts ) ) {
+			return;
+		}
+
+		// Loop throught all posts and set the default `article` term.
+		foreach ( $posts as $p ) {
+			// Set the default `article` term.
+			wp_set_object_terms(
+				$p->ID,
+				'article',
+				Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME
+			);
+		}
+
+		// Trigger the action for the next batch of posts.
+		do_action( 'wp_ajax_set_article_term' );
+	}
 }
