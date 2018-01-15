@@ -76,9 +76,27 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 
 	public function set_article_term_bulk() {
 
+		$this->validate();
+
 		$this->do_set_article_term_bulk();
 
 		wp_send_json_success();
+
+	}
+
+	private function validate() {
+
+		if ( defined( Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME ) ) {
+			echo( '`Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME` is not set.' );
+			wp_die();
+		}
+
+		$term = get_term_by( 'slug', 'article', Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME );
+
+		if ( false === $term ) {
+			echo( 'Term or taxonomy not found.' );
+			wp_die();
+		}
 
 	}
 
@@ -111,11 +129,12 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 			// Add notice in the logs if the term was not set.
 			if ( is_wp_error( $term_taxonomy_ids ) ) {
 				error_log( 'There was an error when processing post ID: ' . $p->ID . ' and the article term couldn\'t be set.' );
+				wp_die( 'An error occurred: ' . $term_taxonomy_ids->get_error_message() );
 			}
 		}
 
 		// Trigger the action for the next batch of posts.
-		do_action( 'wp_ajax_set_article_term' );
+		do_action( 'wp_ajax_wl_set_article_term_bulk' );
 
 	}
 
