@@ -43,7 +43,7 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 	 *
 	 * @return type
 	 */
-	public function get_posts() {
+	private function get_posts() {
 		// Get the existing types.
 		$types = $this->post_types;
 
@@ -59,9 +59,8 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 
 		// Will retrieve all posts that didn't have any `wl_entity_type` taxonomy term.
 		$args = array(
-			'post_type'      => $types,
-			'posts_per_page' => 1,
-			'tax_query'      => array(
+			'post_type' => $types,
+			'tax_query' => array(
 				array(
 					'taxonomy' => Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME,
 					'operator' => 'NOT EXISTS',
