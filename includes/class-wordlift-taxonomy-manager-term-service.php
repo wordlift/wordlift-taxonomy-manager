@@ -15,16 +15,17 @@
  * @package    Wordlift_Taxonomy_Manager
  */
 class Wordlift_Taxonomy_Manager_Term_Service {
+
 	/**
 	 * The post types that will be processed
 	 *
 	 * @since    1.0.0
 	 * @access   protected
-	 * @var      array    $post_types Post types that will be processed.
+	 * @var      array $post_types Post types that will be processed.
 	 */
-	protected $post_types = array(
+	protected static $post_types = array(
 		'post',
-		'page'
+		'page',
 	);
 
 	/**
@@ -33,7 +34,10 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		add_action( 'wp_ajax_set_article_term', array( $this, 'set_article_term' ) );
+		add_action( 'wp_ajax_set_article_term', array(
+			$this,
+			'set_article_term',
+		) );
 	}
 
 	/**
@@ -41,12 +45,9 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return type
+	 * @return array List of posts.
 	 */
-	private function get_posts() {
-		// Get the existing types.
-		$types = $this->post_types;
-
+	private function get_posts_without_entity_term() {
 		/**
 		 * Filter: 'wl_taxonomy_manager_post_types' - Allow third parties to
 		 * hook and extend the manager post types.
@@ -55,12 +56,13 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 		 *
 		 * @param  array $types The post types that will be used by manager.
 		 */
-		$types = apply_filters( 'wl_taxonomy_manager_post_types', $types );
+		$types = apply_filters( 'wl_taxonomy_manager_post_types', self::$post_types );
 
 		// Will retrieve all posts that didn't have any `wl_entity_type` taxonomy term.
 		$args = array(
-			'post_type' => $types,
-			'tax_query' => array(
+			'cache_results' => false,
+			'post_type'     => $types,
+			'tax_query'     => array(
 				array(
 					'taxonomy' => Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME,
 					'operator' => 'NOT EXISTS',
@@ -81,7 +83,7 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 	 */
 	public function set_article_term() {
 		// Get posts.
-		$posts = $this->get_posts();
+		$posts = $this->get_posts_without_entity_term();
 
 		// Bail if there are no posts.
 		// It will end the async loop.
@@ -89,7 +91,7 @@ class Wordlift_Taxonomy_Manager_Term_Service {
 			return;
 		}
 
-		// Loop throught all posts and set the default `article` term.
+		// Loop through all posts and set the default `article` term.
 		foreach ( $posts as $p ) {
 			// Set the default `article` term.
 			$term_taxonomy_ids = wp_set_object_terms(
