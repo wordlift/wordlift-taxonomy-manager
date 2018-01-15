@@ -1,25 +1,20 @@
 <?php
 
 /**
- * The admin-specific functionality of the plugin.
+ * Handles all `wl_entity_term` related actions
  *
  * @link       https://wordlift.io
  * @since      1.0.0
  *
  * @package    Wordlift_Taxonomy_Manager
- * @subpackage Wordlift_Taxonomy_Manager/admin
  */
 
 /**
- * The admin-specific functionality of the plugin.
- *
- * Defines the plugin name, version, and two examples hooks for how to
- * enqueue the admin-specific stylesheet and JavaScript.
+ * Handles all `wl_entity_term` related actions
  *
  * @package    Wordlift_Taxonomy_Manager
- * @subpackage Wordlift_Taxonomy_Manager/admin
  */
-class Wordlift_Taxonomy_Manager_Admin {
+class Wordlift_Taxonomy_Manager_Term_Service {
 	/**
 	 * The post types that will be processed
 	 *
@@ -64,8 +59,9 @@ class Wordlift_Taxonomy_Manager_Admin {
 
 		// Will retrieve all posts that didn't have any `wl_entity_type` taxonomy term.
 		$args = array(
-			'post_type' => $types,
-			'tax_query' => array(
+			'post_type'      => $types,
+			'posts_per_page' => 1,
+			'tax_query'      => array(
 				array(
 					'taxonomy' => Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME,
 					'operator' => 'NOT EXISTS',
@@ -97,11 +93,16 @@ class Wordlift_Taxonomy_Manager_Admin {
 		// Loop throught all posts and set the default `article` term.
 		foreach ( $posts as $p ) {
 			// Set the default `article` term.
-			wp_set_object_terms(
+			$term_taxonomy_ids = wp_set_object_terms(
 				$p->ID,
 				'article',
 				Wordlift_Entity_Types_Taxonomy_Service::TAXONOMY_NAME
 			);
+
+			// Add notice in the logs if the term was not set.
+			if ( is_wp_error( $term_taxonomy_ids ) ) {
+				error_log( 'There was an error when processing post ID: ' . $p->ID . ' and the article term couldn\'t be set.' );
+			}
 		}
 
 		// Trigger the action for the next batch of posts.

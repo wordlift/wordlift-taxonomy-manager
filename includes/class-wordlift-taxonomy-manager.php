@@ -111,12 +111,11 @@ class Wordlift_Taxonomy_Manager {
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-wordlift-taxonomy-manager-admin.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wordlift-taxonomy-manager-term-service.php';
 
 		$this->loader = new Wordlift_Taxonomy_Manager_Loader();
 
-		$plugin_admin = new Wordlift_Taxonomy_Manager_Admin();
-
+		new Wordlift_Taxonomy_Manager_Term_Service();
 	}
 
 	/**
